@@ -1,3 +1,3 @@
-# Signal-Inapainting-from-Fourier-Magnitudes
+# Signal Inapainting from Fourier Magnitudes
 
-Work in progress
+This repo provides the code associated with the preprint [Signal Inpainting from Fourier Magnitudes](https://arxiv.org/abs/2210.15951)
