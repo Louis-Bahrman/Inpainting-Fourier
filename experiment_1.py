@@ -10,7 +10,12 @@ import utils.dsp
 from utils.inpainters.alternated_minimization import inpaint as inpaint_am
 from utils.inpainters.convex_relaxation import inpaint as inpaint_cr
 
-AUDIO_DIRECTORY_PATH = '../Data/LibriSpeech'
+try:
+    from tqdm.auto import tqdm
+except ImportError:
+    tqdm = None
+
+AUDIO_DIRECTORY_PATH = './Data/'
 FIGURE_PATH = './results/experiment_1.pdf'
 MISSING_FRACTIONS = np.arange(0.05, 0.55, 0.05).round(2)
 L = 1024
@@ -21,46 +26,41 @@ SER_PERFECT_RECONSTRUCTION_DB = 20
 signals = utils.signal_extraction.import_audios(
     NUM_SIGNALS, L, AUDIO_DIRECTORY_PATH)
 
-fourier_magnitudes = [utils.dsp.fourier_magnitudes(
-    signal) for signal in signals]
+sers_am = np.zeros((NUM_SIGNALS, len(MISSING_FRACTIONS)))
+sers_cr = np.zeros((NUM_SIGNALS, len(MISSING_FRACTIONS)))
+sers_cr_am = np.zeros((NUM_SIGNALS, len(MISSING_FRACTIONS)))
 
-proba_perfect_reconstruction_am = []
-proba_perfect_reconstruction_cr = []
-proba_perfect_reconstruction_cr_am = []
+iterator_signals = tqdm(signals, desc='Signal') if tqdm is not None else signals
+iterator_missing_fraction = tqdm(
+    MISSING_FRACTIONS, desc='Missing fraction', leave=True) if tqdm is not None else MISSING_FRACTIONS
 
-for missing_fraction in MISSING_FRACTIONS:
-    # Degrade the signals
-    degraded_signals_and_missing_indices = [utils.signal_extraction.degrade_signal(
-        signal, missing_fraction) for signal in signals]
+for i, signal in enumerate(iterator_signals):
+    fourier_magnitudes = utils.dsp.fourier_magnitudes(signal)
+    for j, missing_fraction in enumerate(iterator_missing_fraction):
+        # Degrade the signal
+        degraded_signal, missing_indices = utils.signal_extraction.degrade_signal(
+            signal, missing_fraction)
 
-    # reorganize data into several inpainting problems
-    # which consists of triplets (degraded signals, fourier magnitudes, missing indices)
-    inpainting_problems = [(ds, fm, mi) for ((ds, mi), fm) in zip(
-        degraded_signals_and_missing_indices, fourier_magnitudes)]
+        # inpaint using the 3 methods
+        inpainted_signal_am = inpaint_am(
+            degraded_signal, fourier_magnitudes, missing_indices)
+        inpainted_signal_cr = inpaint_cr(
+            degraded_signal, fourier_magnitudes, missing_indices)
+        inpainted_signal_cr_am = inpaint_am(
+            inpainted_signal_cr, fourier_magnitudes, missing_indices)
 
-    # Run and evaluate the three methods:
-    # AM
-    inpainted_signals_am = [inpaint_am(*ip) for ip in inpainting_problems]
-    sers_am = np.array([utils.dsp.ser_db(es, os)
-                        for es, os in zip(inpainted_signals_am, signals)])
-    proba_perfect_reconstruction_am.append(
-        (sers_am > SER_PERFECT_RECONSTRUCTION_DB).mean())
+        # Evaluate
+        sers_am[i, j] = utils.dsp.ser_db(inpainted_signal_am, signal)
+        sers_cr[i, j] = utils.dsp.ser_db(inpainted_signal_cr, signal)
+        sers_cr_am[i, j] = utils.dsp.ser_db(inpainted_signal_cr_am, signal)
 
-    # CR
-    inpainted_signals_cr = [inpaint_cr(*ip) for ip in inpainting_problems]
-    sers_cr = np.array([utils.dsp.ser_db(es, os)
-                        for es, os in zip(inpainted_signals_cr, signals)])
-    proba_perfect_reconstruction_cr.append(
-        (sers_cr > SER_PERFECT_RECONSTRUCTION_DB).mean())
 
-    # CR + AM
-    inpainted_signals_cr_am = [inpaint_am(*(init_signal, *ip[1:]), already_initialized=True)
-                               for init_signal, ip in zip(inpainted_signals_cr, inpainting_problems)]
-    sers_cr_am = np.array([utils.dsp.ser_db(es, os)
-                           for es, os in zip(inpainted_signals_cr_am, signals)])
-    proba_perfect_reconstruction_cr_am.append(
-        (sers_cr_am > SER_PERFECT_RECONSTRUCTION_DB).mean())
-
+proba_perfect_reconstruction_am = (
+    sers_am > SER_PERFECT_RECONSTRUCTION_DB).mean(axis=0)
+proba_perfect_reconstruction_cr = (
+    sers_cr > SER_PERFECT_RECONSTRUCTION_DB).mean(axis=0)
+proba_perfect_reconstruction_cr_am = (
+    sers_cr_am > SER_PERFECT_RECONSTRUCTION_DB).mean(axis=0)
 
 # Plot and save figure
 plt.rcParams.update({"font.size": 36,

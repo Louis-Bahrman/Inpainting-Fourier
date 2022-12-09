@@ -6,7 +6,7 @@ try:
     import cupy as cp
 except ImportError:
     cp = None
-    
+
 try:
     from tqdm.auto import trange
 except ImportError:
@@ -53,8 +53,9 @@ def inpaint(degraded_signal, fourier_magnitudes, missing_indices, nu=0, n_iter=1
     U = xp.identity(len(fourier_magnitudes) + 1, dtype=M.dtype)
 
     # Iterate until max number of iterations is reached
-    iterable_range = trange if trange is not None else range
-    for _ in iterable_range(n_iter):
+    outer_iterator = trange(n_iter, desc='Block coordinate descent outer iteration',
+                            leave=False) if trange is not None else range(n_iter)
+    for _ in outer_iterator:
         for k in range(L+1):
             kc = reliable_indices([k], L+1)
             z = U[kc, :][:, kc] @ M[kc, k]

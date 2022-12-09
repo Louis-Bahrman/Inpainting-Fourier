@@ -2,10 +2,9 @@ import numpy as np
 import utils.dsp
 
 try:
-    from tqdm.auto import trange as range_container
+    from tqdm.auto import trange
 except ImportError:
-    range_container = range
-
+    trange = None
 
 def loss(degraded_signal, fourier_magnitudes, missing_indices):
     """
@@ -31,7 +30,8 @@ def loss(degraded_signal, fourier_magnitudes, missing_indices):
 
 def zero_init(degraded_signal, fourier_magnitudes, missing_indices):
     """
-    Initialize a signal for the inpainting method. 
+    Initialize a zeroed signal for the inpainting method.
+    
     The output signal corresponds to the degraded signal whose missing indices are set to 0.
 
     Parameters
@@ -69,7 +69,7 @@ def inpaint(degraded_signal, fourier_magnitudes, missing_indices, n_iter_max=100
     n_iter_max : int, optional
         Maximal number of iterations. The default is 1000.
     improvement_threshold_stop : float, optional
-        Threshold for the improvement of the loss. 
+        Threshold for the improvement of the loss.
         If `accumulator_stop` applied to the last `num_last_iterations_stop` of the loss is greater than `improvement_threshold_stop`, the algorithm stops. The default is 1e-10.
     num_last_iterations_stop : int, optional
         Number of last iterations considered for the early stopping of the procedure (see above). The default is 5.
@@ -92,11 +92,15 @@ def inpaint(degraded_signal, fourier_magnitudes, missing_indices, n_iter_max=100
     else:
         inpainted_signal = degraded_signal.copy()
     last_scores = np.full(num_last_iterations_stop, np.inf)
-    for iteration in range_container(n_iter_max):
+    iterator = trange(n_iter_max, desc='Alternated Minimization iteration',leave=False) if trange is not None else range(n_iter_max)
+    for iteration in iterator:
         # We compute the stop criterion
         last_scores[iteration % num_last_iterations_stop] = loss(
             inpainted_signal, fourier_magnitudes, missing_indices)
-        if accumulator_stop(np.roll(last_scores, - (iteration % num_last_iterations_stop))) < improvement_threshold_stop:
+        if (iteration > num_last_iterations_stop
+            and accumulator_stop(np.roll(last_scores, - (iteration % num_last_iterations_stop))) < improvement_threshold_stop):
+            # if hasattr(iterator, 'clear'):
+            #     iterator.close()
             break
         # Each iteration
         u = np.exp(1j * np.angle(np.fft.fft(inpainted_signal)))
