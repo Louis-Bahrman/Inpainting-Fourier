@@ -49,4 +49,4 @@ def awgn(original_signal, target_snr_db):
 
 
 def awgn_capped(original_signal, target_snr_db, cap=0):
-    return np.maximum(cap*np.ones_like(original_signal), original_signal + awgn(original_signal, target_snr_db))
+    return np.maximum(cap*np.ones_like(original_signal), awgn(original_signal, target_snr_db))
