@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Mon Dec  5 09:43:57 2022
-
-@author: louis
+Linear algebra utils
 """
 
 import numpy as np
@@ -14,16 +12,49 @@ except ImportError:
     cp = None
 
 
-def H(A):
+def H(A: np.array) -> np.array:
+    """
+    Compute the hermitian transpose of a matrix
+
+    Parameters
+    ----------
+    A : np.array
+        matrix to be transposed.
+
+    Returns
+    -------
+    np.array
+        Hermitian transpose of `A`.
+
+    """
     return A.conj().T
 
 
-def normalize(x, **kwargs):
+def normalize(x: np.array, **kwargs) -> np.array:
+    """
+    Normalize an array by setting its norm to 1.
+
+    Map the null vector to itself
+
+    Parameters
+    ----------
+    x : np.array
+        array to be normalized.
+    **kwargs : TYPE
+        np.linalg.norm kwargs.
+
+    Returns
+    -------
+    np.array
+        normalized array, s.t. `np.linalg.norm(normalized_array, **kwargs) == 1`
+            or `all(x == 0)`.
+
+    """
     norm = np.linalg.norm(x, **kwargs)
     return x / norm if norm != 0 else x
 
 
-def greatest_eigenvector(Y, assume_hermitian=False):
+def greatest_eigenvector(Y: np.array, assume_hermitian: bool = False) -> np.array:
     """
     Eigenvector associated with the eigenvalue of greatest magnitude.
 

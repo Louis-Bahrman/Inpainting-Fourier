@@ -6,6 +6,7 @@ try:
 except ImportError:
     trange = None
 
+
 def loss(degraded_signal, fourier_magnitudes, missing_indices):
     """
     Loss of the alternated minimization method, normalized by the length of the missing section of the signal.
@@ -31,7 +32,7 @@ def loss(degraded_signal, fourier_magnitudes, missing_indices):
 def zero_init(degraded_signal, fourier_magnitudes, missing_indices):
     """
     Initialize a zeroed signal for the inpainting method.
-    
+
     The output signal corresponds to the degraded signal whose missing indices are set to 0.
 
     Parameters
@@ -92,13 +93,14 @@ def inpaint(degraded_signal, fourier_magnitudes, missing_indices, n_iter_max=100
     else:
         inpainted_signal = degraded_signal.copy()
     last_scores = np.full(num_last_iterations_stop, np.inf)
-    iterator = trange(n_iter_max, desc='Alternated Minimization iteration',leave=False) if trange is not None else range(n_iter_max)
+    iterator = trange(n_iter_max, desc='Alternated Minimization iteration',
+                      leave=False) if trange is not None else range(n_iter_max)
     for iteration in iterator:
         # We compute the stop criterion
         last_scores[iteration % num_last_iterations_stop] = loss(
             inpainted_signal, fourier_magnitudes, missing_indices)
         if (iteration > num_last_iterations_stop
-            and accumulator_stop(np.roll(last_scores, - (iteration % num_last_iterations_stop))) < improvement_threshold_stop):
+                and accumulator_stop(np.roll(last_scores, - (iteration % num_last_iterations_stop))) < improvement_threshold_stop):
             # if hasattr(iterator, 'clear'):
             #     iterator.close()
             break

@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Fri Dec  2 15:55:22 2022
+Random utils
 
-@author: louis
 """
 
 import numpy as np
@@ -12,11 +11,27 @@ from utils.dsp import db_to_power, signal_power_db
 rng = np.random.default_rng()
 
 
-def random_interval(high, length):
+def random_interval(high: int, length: int) -> np.array:
+    """
+    Generate a random integer range of length `length`, and which maximum is lower than `high`
+
+    Parameters
+    ----------
+    high : int
+        Upper bound of the generated range.
+    length : int
+        length of the range.
+
+    Returns
+    -------
+    np.array
+        range.
+
+    """
     if high == length:
         return np.asarray(range(high))
     begin = rng.integers(high - length)
-    return np.asarray(range(begin, begin + length))
+    return np.arange(begin, begin + length)
 
 
 def awgn(original_signal, target_snr_db):
@@ -48,5 +63,25 @@ def awgn(original_signal, target_snr_db):
     return noisy_signal
 
 
-def awgn_capped(original_signal, target_snr_db, cap=0):
+def awgn_capped(original_signal: np.array, target_snr_db: float, cap=0) -> np.array:
+    """
+    Adds white gaussian noise whose variance is adjusted to fit a given signal-to-noise ratio
+    and which minimum is higher than a given threshold
+
+    Parameters
+    ----------
+    original_signal : np.array
+        original signal.
+    target_snr_db : float
+        target signal-to-noise ratio (in db).
+    cap : TYPE, optional
+        minimum of the resulting degraded signal. The default is 0.
+
+    Returns
+    -------
+    np.array
+        noisy signal s.t. `snr_db(noisy_signal, original_signal) = target_snr_db`
+        and `min(noisy_signal) >= cap`
+
+    """
     return np.maximum(cap*np.ones_like(original_signal), awgn(original_signal, target_snr_db))
