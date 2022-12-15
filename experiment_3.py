@@ -23,7 +23,7 @@ FIGURE_PATH = './results/experiment_3.pdf'
 MISSING_FRACTION = 0.25
 L = 1024
 MAGNITUDE_SNRS = [0, 5, 10, 15, 20, 25, 30, 35, 40]
-NUM_SIGNALS = 2
+NUM_SIGNALS = 100
 
 signals = utils.signal_extraction.import_audios(
     NUM_SIGNALS, L, AUDIO_DIRECTORY_PATH)

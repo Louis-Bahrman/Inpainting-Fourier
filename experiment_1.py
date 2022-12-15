@@ -19,7 +19,7 @@ AUDIO_DIRECTORY_PATH = './Data/'
 FIGURE_PATH = './results/experiment_1.pdf'
 MISSING_FRACTIONS = np.arange(0.05, 0.55, 0.05).round(2)
 L = 1024
-NUM_SIGNALS = 2
+NUM_SIGNALS = 100
 SER_PERFECT_RECONSTRUCTION_DB = 20
 
 # Import signals and compute their Fourier Magnitudes
